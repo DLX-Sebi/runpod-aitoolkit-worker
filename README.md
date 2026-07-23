@@ -16,6 +16,8 @@ Base models live on a **network volume** (mounted at `/runpod-volume`, `HF_HOME=
 
 A `Dockerfile` is included for the future baked-image variant (needs a registry with `write:packages`).
 
+**⚠️ After every handler push, bump an env var on the template** (e.g. `HANDLER_REV`) — FlashBoot keeps idle workers' python processes frozen in memory, so a warm worker reuses the OLD handler even though the start command would fetch the new one at boot. A template change forces fresh workers. (Live incident 2026-07-23: fix pushed, warm worker still failed with the pre-fix error.)
+
 ## Tasks
 
 | task | input | result |
