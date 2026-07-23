@@ -27,7 +27,13 @@ HF_HOME = os.path.join(VOLUME, "hf")
 os.environ["HF_HOME"] = HF_HOME
 os.environ.setdefault("HF_HUB_ENABLE_HF_TRANSFER", "1")
 
+# boto3 >=1.36 defaults to chunked uploads + flexible checksums that
+# S3-compatibles (MojoIce) reject with MissingContentLength — force legacy mode
+os.environ.setdefault("AWS_REQUEST_CHECKSUM_CALCULATION", "when_required")
+os.environ.setdefault("AWS_RESPONSE_CHECKSUM_VALIDATION", "when_required")
+
 import boto3  # noqa: E402
+from boto3.s3.transfer import TransferConfig  # noqa: E402
 import requests  # noqa: E402
 import runpod  # noqa: E402
 import yaml  # noqa: E402
@@ -58,9 +64,13 @@ def s3():
     )
 
 
+# single-part PUT up to 1GB — multipart UploadPart is what MojoIce chokes on
+XFER = TransferConfig(multipart_threshold=1024 ** 3)
+
+
 def upload_and_sign(local_path, key):
     c = s3()
-    c.upload_file(local_path, S3_BUCKET, key)
+    c.upload_file(local_path, S3_BUCKET, key, Config=XFER)
     return c.generate_presigned_url(
         "get_object", Params={"Bucket": S3_BUCKET, "Key": key}, ExpiresIn=7 * 86400
     )
