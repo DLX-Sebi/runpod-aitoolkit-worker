@@ -108,6 +108,7 @@ def build_config(inp, dataset_dir, output_dir):
             "process": [{
                 "type": "diffusion_trainer",
                 "training_folder": output_dir,
+                "model": model,
                 "device": "cuda",
                 "trigger_word": inp.get("trigger_word") or None,
                 "performance_log_every": 50,
